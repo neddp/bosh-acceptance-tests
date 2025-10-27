@@ -181,12 +181,9 @@ module Bat
     end
 
     def nic_groups
-       @spec['properties']['job_networks'].inject([]) do |memo, network|
-        if network['nic_group']
-          memo << network['nic_group']
-        end
-        memo
-      end
+      @spec['properties']['job_networks']
+        .select { |network| network['nic_group'] }
+        .map { |network| network['nic_group'] }
     end
 
     def get_most_recent_task_id
