@@ -40,7 +40,7 @@ describe 'network configuration' do
     end
   end
 
-  context 'when using nic_groups', nic_groups: true do
+  context 'when using nic_groups', nic_groups: true, multiple_manual_networks: true do
     before(:all) do
       use_multiple_manual_networks
       skip "Skipping nic_groups tests because a nic_group is not defined" if nic_groups.empty?
