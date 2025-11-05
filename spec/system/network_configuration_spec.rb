@@ -36,10 +36,9 @@ describe 'network configuration' do
 
       interfaces = bosh_ssh('batlight', 0, 'ip -o addr', deployment: deployment.name, result: true,
                                                          column: 'stdout').output
-      instance_ips = get_instance_ips
-      expect(instance_ips.values.first.length).to be > 1
-      @spec['properties']['job_networks'].select { |n| n['static_ip'] }.each do |network|
-        expect(interfaces).to include(network['static_ip'])
+      expect(get_instance_ips.values.first.length).to be > 1
+      static_ips.each do |network|
+        expect(interfaces).to include(network)
       end
     end
   end
