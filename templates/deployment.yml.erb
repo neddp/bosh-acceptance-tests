@@ -58,7 +58,7 @@ instance_groups:
         static_ips:
           - <%= network.static_ip %>
         <% end %>
-        <% if network.nic_group %>
+        <% if properties.use_nic_groups && network.nic_group %>
         nic_group: <%= network.nic_group %>
         <% end %>
     <% end %>
