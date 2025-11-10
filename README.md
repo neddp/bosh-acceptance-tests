@@ -83,10 +83,10 @@ properties:
     nic_group: 1
   - name: second
     type: manual
-    static_ip: 10.10.0.32
-    cidr: 10.10.0.32/24
+    static_ip: 10.10.0.50
+    cidr: 10.10.0.0/24
     reserved: ['10.10.0.33 - 10.10.0.39']
-    static: ['10.10.0.40 - 10.10.0.5f']
+    static: ['10.10.0.40 - 10.10.0.51']
     gateway: 10.10.0.1
     subnet: subnet-xxxxxxxx
     security_groups: 'bat'
