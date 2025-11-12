@@ -240,7 +240,7 @@ module Bat
     end
 
     def ipv6_network?(network)
-      return true if network['static_ip'] && network['static_ip'].include?(':')
+      return true if network['cidr'] && network['cidr'].include?(':')
 
       false
     end
