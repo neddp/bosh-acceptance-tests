@@ -65,7 +65,7 @@ describe 'IPv6 network configuration', multiple_manual_networks: true, ipv6: tru
         cli_cmd = 'sudo cat /var/vcap/bosh/spec.json'
         spec_output = bosh_ssh(instance_name, instance_id, cli_cmd, deployment: @deployment.name, result: true,
                                                                     column: 'stdout').output
-        spec = JSON.parse(spec_output)
+        spec = parse_json_safely(spec_output)
 
         found = spec['networks'].values.any? do |net|
           IPAddr.new(net['ip']) == IPAddr.new(ip) && net['prefix'].to_s == prefix.to_s
@@ -98,20 +98,16 @@ describe 'IPv6 network configuration', multiple_manual_networks: true, ipv6: tru
         usable_ip_with_prefix = data[:usable_ip_with_prefix]
 
         instance_name, instance_id = instance.split('/')
-        begin
           # Grab the interface associated by the IaaS with the prefix from the kernel routes
           probe_cmd = "ip -j -6 route get #{usable_ip}"
           probe_output = bosh_ssh(instance_name, instance_id, probe_cmd, deployment: @deployment.name,
                                                                          result: true, column: 'stdout').output
           # ip -j returns JSON like: [{"dst":"...","from":"::","dev":"eth1",...}]
-          parsed = JSON.parse(probe_output)
+          parsed = parse_json_safely(probe_output)
           interface = parsed[0]['dev'] if parsed && parsed[0] && parsed[0]['dev']
           if interface.nil? || interface.to_s.empty?
             raise "Failed to determine interface from 'ip -j -6 route get' output on instance #{instance}: #{probe_output.inspect}"
           end
-        rescue JSON::ParserError
-          raise "Failed to parse JSON output from 'ip route' command on instance #{instance}"
-        end
 
         config_cmd = <<~SCRIPT
           echo "[Address]" | sudo tee -a /etc/systemd/network/10_#{interface}.network

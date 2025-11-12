@@ -64,7 +64,7 @@ describe 'network configuration' do
 
       output = bosh_ssh('batlight', 0, 'ip -j addr', deployment: @deployment.name, result: true,
                                                      column: 'stdout').output
-      raw_interfaces_json = JSON.parse(output)
+      raw_interfaces_json = parse_json_safely(output)
 
       ip_to_interface_map = {}
       raw_interfaces_json.reject { |iface| iface['ifname'] == 'lo' }.each do |iface|
