@@ -21,6 +21,9 @@ module Bat
       @spec['properties']['batlight']['missing'] = 'nope'
       # dup the job_network so test-local mutations don't affect other tests
       @spec['properties']['job_networks'] = [@spec['properties']['networks'].first.dup]
+      # Set default values for network filtering
+      @spec['properties']['network_prefixes'] = false
+      @spec['properties']['ipv6'] = false
     end
 
     # if with_deployment() is called without a block, it is up to the caller to
@@ -113,12 +116,9 @@ module Bat
     end
 
     def static_ips
-      @spec['properties']['job_networks'].inject([]) do |memo, network|
-        if network['type'] == 'manual'
-          memo << network['static_ip']
-        end
-        memo
-      end
+      filter_networks(@spec['properties']['job_networks'])
+        .select { |network| network['type'] == 'manual' }
+        .map { |network| network['static_ip'] }
     end
 
     def use_second_static_ip
@@ -130,23 +130,19 @@ module Bat
       @spec['properties']['second_static_ip']
     end
 
-    def network_prefixes
-      @spec['properties']['job_networks'].inject([]) do |memo, network|
-        if network['prefix']
-          memo << network['prefix']
-        end
-        memo
-      end
+    def use_ipv6_network_prefixes
+      @spec['properties']['network_prefixes'] = true
+    end
+
+    def use_ipv6
+      @spec['properties']['ipv6'] = true
     end
 
     def use_multiple_manual_networks
-      @spec['properties']['job_networks'] = []
-      @spec['properties']['networks'].each do |network|
-        if network['type'] == 'manual'
-          # dup the job_networks so test-local mutations don't affect other tests
-          @spec['properties']['job_networks'] << network.dup
-        end
-      end
+      @spec['properties']['job_networks'] =
+        filter_networks(@spec['properties']['networks'] || [])
+          .select { |network| network['type'] == 'manual' }
+          .map { |network| network.dup }
     end
 
     def use_raw_instance_storage
@@ -189,6 +185,10 @@ module Bat
       @spec['properties'].fetch('network', {}).fetch('type', nil)
     end
 
+    def use_nic_groups
+      @spec['properties']['use_nic_groups'] = true
+    end
+
     def get_most_recent_task_id
       output = @bosh_runner.bosh("tasks --recent=1").output
       JSON.parse(output)["Tables"].first["Rows"].first["id"]
@@ -224,6 +224,26 @@ module Bat
     end
 
     private
+
+    def filter_networks(networks)
+      filtered = networks || []
+      
+      if @spec['properties']['network_prefixes'] == false
+        filtered = filtered.reject { |n| n['prefix'] }
+      end
+      
+      if @spec['properties']['ipv6'] == false
+        filtered = filtered.reject { |n| ipv6_network?(n) }
+      end
+      
+      filtered
+    end
+
+    def ipv6_network?(network)
+      return true if network['cidr'] && network['cidr'].include?(':')
+
+      false
+    end
 
     def spec
       @spec ||= {}
