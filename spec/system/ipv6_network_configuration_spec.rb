@@ -88,6 +88,7 @@ describe 'IPv6 network configuration', multiple_manual_networks: true, ipv6: tru
       instances_usable_ips = {}
       instances_prefix_ips.each do |instance, ip_with_prefix|
         prefix_ip, prefix_len = ip_with_prefix.split('/')
+        # Use a random address within the allocated prefix for testing connectivity
         usable_ip = "#{prefix_ip.chomp('::')}::20"
         usable_ip_with_prefix = "#{usable_ip}/#{prefix_len}"
         instances_usable_ips[instance] = { usable_ip: usable_ip, usable_ip_with_prefix: usable_ip_with_prefix }
