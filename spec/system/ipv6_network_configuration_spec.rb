@@ -99,16 +99,16 @@ describe 'IPv6 network configuration', multiple_manual_networks: true, ipv6: tru
         usable_ip_with_prefix = data[:usable_ip_with_prefix]
 
         instance_name, instance_id = instance.split('/')
-          # Grab the interface associated by the IaaS with the prefix from the kernel routes
-          probe_cmd = "ip -j -6 route get #{usable_ip}"
-          probe_output = bosh_ssh(instance_name, instance_id, probe_cmd, deployment: @deployment.name,
-                                                                         result: true, column: 'stdout').output
-          # ip -j returns JSON like: [{"dst":"...","from":"::","dev":"eth1",...}]
-          parsed = parse_json_safely(probe_output)
-          interface = parsed[0]['dev'] if parsed && parsed[0] && parsed[0]['dev']
-          if interface.nil? || interface.to_s.empty?
-            raise "Failed to determine interface from 'ip -j -6 route get' output on instance #{instance}: #{probe_output.inspect}"
-          end
+        # Grab the interface associated by the IaaS with the prefix from the kernel routes
+        probe_cmd = "ip -j -6 route get #{usable_ip}"
+        probe_output = bosh_ssh(instance_name, instance_id, probe_cmd, deployment: @deployment.name,
+                                                                       result: true, column: 'stdout').output
+        # ip -j returns JSON like: [{"dst":"...","from":"::","dev":"eth1",...}]
+        parsed = parse_json_safely(probe_output)
+        interface = parsed[0]['dev'] if parsed && parsed[0] && parsed[0]['dev']
+        if interface.nil? || interface.to_s.empty?
+          raise "Failed to determine interface from 'ip -j -6 route get' output on instance #{instance}: #{probe_output.inspect}"
+        end
 
         config_cmd = <<~SCRIPT
           echo "[Address]" | sudo tee -a /etc/systemd/network/10_#{interface}.network
@@ -125,7 +125,7 @@ describe 'IPv6 network configuration', multiple_manual_networks: true, ipv6: tru
         instances_usable_ips.each do |target_instance, data|
           next if source_instance == target_instance # Skip pinging self
 
-          ping_result = bosh_ssh(source_name, source_id, "ping6 -c 5 #{data[:usable_ip]}",
+          ping_result = bosh_ssh(source_name, source_id, "sudo ping6 -c 5 #{data[:usable_ip]}",
                                  deployment: @deployment.name, result: true, column: 'stdout').output
           success = ping_result.match(/0% packet loss/) || ping_result.match(/\d+ packets transmitted, \d+ received/)
           expect(success).to be_truthy,
